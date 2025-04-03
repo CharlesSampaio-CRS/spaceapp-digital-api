@@ -1,0 +1,33 @@
+{
+  "name": "spaceapp-digital-api",
+  "version": "1.0.0",
+  "description": "API for SpaceApp Digital using Fastify",
+  "main": "node server.js",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dev": "nodemon ./src/server.js",
+    "test": "jest"
+  },
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.8.4",
+    "bcrypt": "^5.1.1",
+    "fastify": "^5.2.2",
+    "redis": "^4.7.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "keywords": [
+    "fastify",
+    "api",
+    "nodejs"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT"
+}

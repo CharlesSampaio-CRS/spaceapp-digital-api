@@ -1,8 +1,8 @@
 import Fastify from 'fastify';
-import { connectRedis } from '../database/redisClient.js';
-import applicationsRoutes from '../routes/applicationsRoutes.js';
-import usersRoutes from '../routes/usersRoutes.js';
-import spacesRoutes from '../routes/spacesRoutes.js';
+import { connectRedis } from '../src/database/redisClient.js';
+import applicationsRoutes from '../src/routes/applications.js';
+import usersRoutes from '../src/routes/users.js';
+import spacesRoutes from '../src/routes/spaces.js';
 
 const fastify = Fastify({ logger: true });
 

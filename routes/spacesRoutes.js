@@ -16,7 +16,7 @@ export default async function routes(fastify) {
                 client.get(`space:user:${userUuid}`),
                 Promise.all(applicationsUuid.map(async (appUuid) => {
                     const appData = await client.get(`application:${appUuid}`);
-                    return appData ? JSON.parse(appData) : null;
+                    return appData ? appUuid : null;
                 }))
             ]);
     
@@ -38,7 +38,7 @@ export default async function routes(fastify) {
             const newSpace = {
                 uuid,
                 userUuid,
-                applications,
+                applications: applicationsUuid, 
                 active: true,
                 createdAt,
                 updatedAt: null
@@ -55,41 +55,62 @@ export default async function routes(fastify) {
         }
     });
 
-
     fastify.get('/spaces', async (_request, reply) => {
         try {
             const keys = await client.keys('space:*');
             const spaces = await Promise.all(
                 keys.map(async (key) => {
-                    const space = await client.get(key);
-
+                    const spaceData = await client.get(key);
+                    
                     try {
-                        return JSON.parse(space);
+                        const space = JSON.parse(spaceData);
+                        const applications = await Promise.all(
+                            space.applications.map(async (appUuid) => {
+                                const appData = await client.get(`application:${appUuid}`);
+                                return appData ? JSON.parse(appData) : null;
+                            })
+                        );
+    
+                        return { ...space, applications: applications.filter(Boolean) };
                     } catch (err) {
                         console.warn(`Skipping non-JSON key: ${key}`);
                         return null;
                     }
                 })
             );
-
+    
             return reply.send(spaces.filter(Boolean));
         } catch (err) {
             return reply.status(500).send({ error: 'Error fetching spaces', details: err.message });
         }
     });
-
+    
     fastify.get('/spaces/:uuid', async (request, reply) => {
         const { uuid } = request.params;
-    
         try {
             const spaceData = await client.get(`space:${uuid}`);
             if (!spaceData) {
                 return reply.status(404).send({ error: 'Space not found!' });
             }
     
-            let space = JSON.parse(spaceData);
+
+            const space = JSON.parse(spaceData);
+
+            if (!Array.isArray(space.applications) || space.applications.length === 0) {
+                return reply.send({ ...space, applications: [] });
+            }
+
+            const applications = await Promise.all(
+                space.applications.map(async (appUuid) => {
+                    const appData = await client.get(`application:${appUuid}`);
+                    return appData ? JSON.parse(appData) : null;;
+                })
+            );
+            
+
+            space.applications = applications
     
-            return reply.send(space);
+            return reply.send({ ...space });
         } catch (err) {
             return reply.status(500).send({ error: 'Error fetching space', details: err.message });
         }
@@ -167,7 +188,3 @@ export default async function routes(fastify) {
     });
 
 }
-
-
-//9a103f4d-d2a5-41d4-b1df-e8a90488c3a4
-//ee0ac09f-c257-459b-ba47-4e6603cae6ea

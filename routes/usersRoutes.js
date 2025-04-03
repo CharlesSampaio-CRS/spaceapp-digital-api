@@ -14,7 +14,6 @@ export default async function routes(fastify) {
 
     const uuid = uuidv4();
     const createdAt = new Date().toISOString();
-    const updatedAt = createdAt;
 
     const newUser = {
       uuid,
@@ -24,7 +23,7 @@ export default async function routes(fastify) {
       plan,
       active,
       createdAt,
-      updatedAt
+      updatedAt: null
     };
 
     try {

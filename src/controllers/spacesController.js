@@ -1,7 +1,7 @@
 import { client } from '../database/mongodb.js';
 import { v4 as uuidv4 } from 'uuid';
 
-const db = client.db('your_database');
+const db = client.db('cluster-db-atlas');
 const spaceCollection = db.collection('spaces');
 const userCollection = db.collection('users');
 const appCollection = db.collection('applications');
@@ -63,23 +63,60 @@ export const createSpace = async (request, reply) => {
 
 export const getAllSpaces = async (_request, reply) => {
   try {
-    const spaces = await spaceCollection.find().toArray();
+    const spaces = await spaceCollection.aggregate([
+      {
+        $lookup: {
+          from: 'applications',
+          localField: 'applicationsUuid',
+          foreignField: 'applicationsUuid',
+          as: 'applications'
+        }
+      }
+    ]).toArray();
+
     return reply.send(spaces);
   } catch (err) {
-    return reply.status(500).send({ error: 'Error fetching spaces', details: err.message });
+    return reply.status(500).send({
+      error: 'Error fetching spaces with applications',
+      details: err.message
+    });
   }
 };
 
+
 export const getSpaceById = async (request, reply) => {
   const { uuid } = request.params;
+
   try {
-    const space = await spaceCollection.findOne({ uuid });
-    if (!space) return reply.status(404).send({ error: 'Space not found!' });
+    const spaces = await spaceCollection.aggregate([
+      {
+        $match: { uuid } // filtra pelo uuid
+      },
+      {
+        $lookup: {
+          from: 'applications', // nome da collection
+          localField: 'applicationsUuid', // lista de UUIDs no space
+          foreignField: 'applicationsUuid', // uuid no application
+          as: 'applications' // novo campo com os dados completos
+        }
+      }
+    ]).toArray();
+
+    const space = spaces[0];
+
+    if (!space) {
+      return reply.status(404).send({ error: 'Space not found!' });
+    }
+
     return reply.send(space);
   } catch (err) {
-    return reply.status(500).send({ error: 'Error fetching space', details: err.message });
+    return reply.status(500).send({
+      error: 'Error fetching space with applications',
+      details: err.message
+    });
   }
 };
+
 
 export const updateSpace = async (request, reply) => {
   const { uuid } = request.params;

@@ -2,7 +2,7 @@ import { client } from '../database/mongodb.js';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 
-const db = client.db('your_database');
+const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
 
 export const createUser = async (request, reply) => {

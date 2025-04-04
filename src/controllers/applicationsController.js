@@ -1,7 +1,7 @@
 import { client } from '../database/mongodb.js'; // Assume que você exporta o MongoClient e a conexão já está feita
 import { v4 as uuidv4 } from 'uuid';
 
-const collection = client.db('your_database').collection('applications');
+const collection = client.db('cluster-db-atlas').collection('applications');
 
 export const createApplication = async (request, reply) => {
   const { application, url, active, icon, type } = request.body;

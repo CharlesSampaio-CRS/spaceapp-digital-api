@@ -1,7 +1,11 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
+import { config } from 'dotenv';
 
-//const uri = "mongodb+srv://userspaceappapi:ghx4b0Hs29l7Oi68@cluster-db-atlas.dr5xk8i.mongodb.net/?appName=cluster-db-atlas";
-const uri = 'mongodb://localhost:27017';
+const envFile = process.env.NODE_ENV === 'production' ? '.env.dev' : '.env.dev';
+
+config({ path: envFile });
+
+const uri = process.env.MONGO_URL;
 
 const client = new MongoClient(uri, {
   serverApi: {

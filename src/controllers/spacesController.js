@@ -90,14 +90,14 @@ export const getSpaceById = async (request, reply) => {
   try {
     const spaces = await spaceCollection.aggregate([
       {
-        $match: { uuid } // filtra pelo uuid
+        $match: { uuid } 
       },
       {
         $lookup: {
-          from: 'applications', // nome da collection
-          localField: 'applicationsUuid', // lista de UUIDs no space
-          foreignField: 'applicationsUuid', // uuid no application
-          as: 'applications' // novo campo com os dados completos
+          from: 'applications', 
+          localField: 'applicationsUuid', 
+          foreignField: 'applicationsUuid', 
+          as: 'applications' 
         }
       }
     ]).toArray();
@@ -180,8 +180,8 @@ export const flushDatabase = async (_request, reply) => {
   try {
     await Promise.all([
       spaceCollection.deleteMany({}),
-      userCollection.deleteMany({}), // Optional: remove if not desired
-      appCollection.deleteMany({}), // Optional: remove if not desired
+      userCollection.deleteMany({}), 
+      appCollection.deleteMany({}), 
     ]);
     return reply.send({ message: 'All data has been deleted successfully!' });
   } catch (err) {

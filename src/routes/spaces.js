@@ -4,7 +4,7 @@ import {
     getSpaceById,
     updateSpace,
     deactivateSpace,
-    flushRedis
+    flushDatabase
 } from '../controllers/spacesController.js';
 
 export default async function spaceRoutes(fastify) {
@@ -13,5 +13,5 @@ export default async function spaceRoutes(fastify) {
     fastify.get('/spaces/:uuid', getSpaceById);
     fastify.put('/spaces/:uuid', updateSpace);
     fastify.delete('/spaces/:uuid', deactivateSpace);
-    fastify.delete('/redis/flush', flushRedis);
+    fastify.delete('/database/flush', flushDatabase);
 }

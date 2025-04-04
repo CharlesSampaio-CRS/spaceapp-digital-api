@@ -1,5 +1,7 @@
-import { client } from '../database/redisClient.js';
+import { client } from '../database/mongodb.js'; // Assume que você exporta o MongoClient e a conexão já está feita
 import { v4 as uuidv4 } from 'uuid';
+
+const collection = client.db('your_database').collection('applications');
 
 export const createApplication = async (request, reply) => {
   const { application, url, active, icon, type } = request.body;
@@ -23,14 +25,12 @@ export const createApplication = async (request, reply) => {
   };
 
   try {
-    const existingApplication = await client.get(`application:${application}`);
-    if (existingApplication) {
+    const existing = await collection.findOne({ application });
+    if (existing) {
       return reply.status(409).send({ error: 'Application already registered!' });
     }
 
-    await client.set(`application:${uuid}`, JSON.stringify(newApplication));
-    await client.set(`application:${application}`, uuid);
-
+    await collection.insertOne(newApplication);
     return reply.status(201).send(newApplication);
   } catch (err) {
     return reply.status(500).send({ error: 'Error creating application', details: err.message });
@@ -39,25 +39,8 @@ export const createApplication = async (request, reply) => {
 
 export const getAllApplications = async (_request, reply) => {
   try {
-    const keys = await client.keys('application:*');
-
-    if (!keys.length) {
-      return reply.send([]); 
-    }
-
-    const applications = await Promise.all(
-      keys.map(async (key) => {
-        const app = await client.get(key);
-        try {
-          return app ? JSON.parse(app) : null;
-        } catch (parseError) {
-          console.error(`Error parsing application data for key ${key}:`, parseError);
-          return null;
-        }
-      })
-    );
-
-    return reply.send(applications.filter(Boolean)); 
+    const applications = await collection.find().toArray();
+    return reply.send(applications);
   } catch (err) {
     return reply.status(500).send({ error: 'Error fetching applications', details: err.message });
   }
@@ -67,27 +50,30 @@ export const getApplicationById = async (request, reply) => {
   const { uuid } = request.params;
 
   try {
-    const app = await client.get(`application:${uuid}`);
+    const app = await collection.findOne({ uuid });
     if (!app) return reply.status(404).send({ error: 'Application not found' });
-    return reply.send(JSON.parse(app));
+    return reply.send(app);
   } catch (err) {
     return reply.status(500).send({ error: 'Error fetching application', details: err.message });
   }
 };
-
 
 export const updateApplication = async (request, reply) => {
   const { uuid } = request.params;
   const data = request.body;
 
   try {
-    const app = await client.get(`application:${uuid}`);
-    if (!app) return reply.status(404).send({ error: 'Application not found' });
-    
     const updatedAt = new Date().toISOString();
-    const updatedApp = { ...JSON.parse(app), ...data, updatedAt };
-    
-    await client.set(`application:${uuid}`, JSON.stringify(updatedApp));
+    const updateResult = await collection.updateOne(
+      { uuid },
+      { $set: { ...data, updatedAt } }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return reply.status(404).send({ error: 'Application not found' });
+    }
+
+    const updatedApp = await collection.findOne({ uuid });
     return reply.send({ message: 'Application updated!', app: updatedApp });
   } catch (err) {
     return reply.status(500).send({ error: 'Error updating application', details: err.message });
@@ -98,10 +84,12 @@ export const deleteApplication = async (request, reply) => {
   const { uuid } = request.params;
 
   try {
-    const app = await client.get(`application:${uuid}`);
-    if (!app) return reply.status(404).send({ error: 'Application not found' });
-    
-    await client.del(`application:${uuid}`);
+    const deleteResult = await collection.deleteOne({ uuid });
+
+    if (deleteResult.deletedCount === 0) {
+      return reply.status(404).send({ error: 'Application not found' });
+    }
+
     return reply.send({ message: 'Application removed!', uuid });
   } catch (err) {
     return reply.status(500).send({ error: 'Error deleting application', details: err.message });

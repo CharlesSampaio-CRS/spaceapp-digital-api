@@ -1,5 +1,4 @@
 import {
-  createUser,
   getAllUsers,
   getUserById,
   updateUser,
@@ -7,9 +6,8 @@ import {
 } from '../controllers/usersController.js';
 
 export default async function usersRoutes(fastify) {
-  fastify.post('/users', createUser);
-  fastify.get('/users', getAllUsers);
-  fastify.get('/users/:id', getUserById);
-  fastify.put('/users/:id', updateUser);
-  fastify.delete('/users/:id', deleteUser);
+  fastify.get('/users', { preHandler: [fastify.authenticate] }, getAllUsers);
+  fastify.get('/users/:id', { preHandler: [fastify.authenticate] }, getUserById);
+  fastify.put('/users/:id', { preHandler: [fastify.authenticate] }, updateUser);
+  fastify.delete('/users/:id', { preHandler: [fastify.authenticate] }, deleteUser);
 }

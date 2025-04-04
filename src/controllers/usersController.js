@@ -1,44 +1,7 @@
 import { client } from '../database/mongodb.js';
-import { v4 as uuidv4 } from 'uuid';
-import bcrypt from 'bcrypt';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
-
-export const createUser = async (request, reply) => {
-  const { username, email, password, plan, active } = request.body;
-
-  if (!username || !email || !password || !plan || active === undefined) {
-    return reply.status(400).send({ error: 'All fields are required!' });
-  }
-
-  try {
-    const existingUser = await userCollection.findOne({ email });
-    if (existingUser) {
-      return reply.status(409).send({ error: 'Email already registered!' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const uuid = uuidv4();
-    const createdAt = new Date().toISOString();
-
-    const newUser = {
-      uuid,
-      username,
-      email,
-      password: hashedPassword,
-      plan,
-      active,
-      createdAt,
-      updatedAt: null,
-    };
-
-    await userCollection.insertOne(newUser);
-    return reply.status(201).send(newUser);
-  } catch (err) {
-    return reply.status(500).send({ error: 'Error creating user', details: err.message });
-  }
-};
 
 export const getAllUsers = async (_request, reply) => {
   try {

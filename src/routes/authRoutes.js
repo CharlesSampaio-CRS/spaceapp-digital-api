@@ -1,6 +1,10 @@
-import { login , register } from '../controllers/authController.js';
+// src/routes/authRoutes.js
+import { 
+  register, 
+  login
+} from '../controllers/authController.js';
 
-export default async function authRoutes(fastify) {
-    fastify.post('/login', login);
-    fastify.post('/register', register); 
-  }
+export default async function authRoutes(fastify, options) {
+  fastify.post('/register', register);
+  fastify.post('/login', login);
+}

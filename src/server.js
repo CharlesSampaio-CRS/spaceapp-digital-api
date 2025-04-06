@@ -1,7 +1,7 @@
 // server.js
 import Fastify from 'fastify';
 import { config } from 'dotenv';
-import { client } from './database/mongodb.js';
+import { client } from './db/mongodb.js';
 import applicationsRoutes from './routes/applications.js';
 import usersRoutes from './routes/users.js';
 import spacesRoutes from './routes/spaces.js';

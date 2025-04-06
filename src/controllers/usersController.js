@@ -1,4 +1,4 @@
-import { client } from '../database/mongodb.js';
+import { client } from '../db/mongodb.js';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');

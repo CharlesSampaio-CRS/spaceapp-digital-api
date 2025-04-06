@@ -1,4 +1,4 @@
-import { client } from '../database/mongodb.js'; // Assume que você exporta o MongoClient e a conexão já está feita
+import { client } from '../db/mongodb.js'; // Assume que você exporta o MongoClient e a conexão já está feita
 import { v4 as uuidv4 } from 'uuid';
 
 const collection = client.db('cluster-db-atlas').collection('applications');

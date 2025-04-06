@@ -1,8 +1,7 @@
 // src/controllers/authController.js
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { client } from '../database/mongodb.js';
-import fetch from 'node-fetch';
+import { client } from '../db/mongodb.js';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
@@ -79,94 +78,47 @@ export const login = async (request, reply) => {
   }
 };
 
-export const loginWithGoogle = async (request, reply) => {
+const getAuthStatus = async (request, reply) => {
+  return { 
+    authenticated: true, 
+    user: {
+      uid: request.user.uid,
+      email: request.user.email,
+      name: request.user.name,
+      picture: request.user.picture
+    }
+  };
+};
+
+// Função para verificar se um usuário existe no Firebase
+const checkUserExists = async (request, reply) => {
   try {
-    const token = await request.server.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
-
-    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: {
-        Authorization: `Bearer ${token.access_token}`
+    const { email } = request.body;
+    
+    if (!email) {
+      return reply.code(400).send({ 
+        error: 'Email é obrigatório' 
+      });
+    }
+    
+    try {
+      await auth.getUserByEmail(email);
+      return { exists: true };
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return { exists: false };
       }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Erro ao verificar existência de usuário:', error);
+    return reply.code(500).send({ 
+      error: 'Erro ao verificar existência de usuário' 
     });
-
-    if (!response.ok) {
-      throw new Error(`Erro na API do Google: ${response.statusText}`);
-    }
-
-    const googleUser = await response.json();
-
-    if (!googleUser?.email) {
-      return reply.status(400).send({ error: 'Não foi possível obter e-mail do Google.' });
-    }
-
-    // Verificar se o e-mail está verificado
-    if (!googleUser.verified_email) {
-      return reply.status(403).send({ error: 'E-mail do Google não verificado.' });
-    }
-
-    // Buscar usuário existente por e-mail ou googleId
-    let user = await userCollection.findOne({ 
-      $or: [
-        { email: googleUser.email },
-        { googleId: googleUser.sub }
-      ]
-    });
-
-    // Se não existir, criar novo usuário
-    if (!user) {
-      const username = googleUser.name?.replace(/\s+/g, '_').toLowerCase() || 
-                      googleUser.email.split('@')[0];
-
-      user = {
-        uuid: uuidv4(),
-        username,
-        email: googleUser.email,
-        password: null,
-        plan: 'free',
-        active: true,
-        createdAt: new Date(),
-        updatedAt: null,
-        type: 'user',
-        googleId: googleUser.sub,
-        picture: googleUser.picture
-      };
-
-      const result = await userCollection.insertOne(user);
-      user._id = result.insertedId;
-    }
-
-    // Gerar token JWT
-    const jwtToken = await reply.jwtSign({
-      uuid: user.uuid,
-      username: user.username,
-      email: user.email,
-      picture: user.picture
-    });
-
-    // Redirecionar para o frontend com o token
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const redirectUrl = new URL(`${frontendUrl}/auth/google`);
-    redirectUrl.searchParams.append('token', jwtToken);
-
-    return reply.redirect(redirectUrl.toString());
-
-  } catch (err) {
-    console.error('Erro no login com Google:', err);
-    
-    // Redirecionar para o frontend com erro
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const errorUrl = new URL(`${frontendUrl}/auth/google`);
-    errorUrl.searchParams.append('error', 'google_auth_failed');
-    
-    return reply.redirect(errorUrl.toString());
   }
 };
 
-// Adicione esta função para iniciar o fluxo de login
-export const startGoogleLogin = async (request, reply) => {
-  // O próprio plugin @fastify/oauth2 irá lidar com o redirecionamento
-  return reply.send({ 
-    message: 'Redirecionando para o Google...',
-    url: '/login/google' // Rota configurada no plugin OAuth2
-  });
+module.exports = {
+  getAuthStatus,
+  checkUserExists
 };

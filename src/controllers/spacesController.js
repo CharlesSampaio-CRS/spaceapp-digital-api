@@ -1,4 +1,4 @@
-import { client } from '../database/mongodb.js';
+import { client } from '../db/mongodb.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const db = client.db('cluster-db-atlas');

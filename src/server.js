@@ -1,8 +1,8 @@
+// server.js
 import Fastify from 'fastify';
 import { config } from 'dotenv';
 import { client } from './db/mongodb.js';
 import applicationsRoutes from './routes/applications.js';
-import usersRoutes from './routes/users.js';
 import spacesRoutes from './routes/spaces.js';
 import authRoutes from './routes/authRoutes.js';
 import swagger from '@fastify/swagger';
@@ -56,7 +56,6 @@ const startServer = async () => {
     await client.connect();
 
     fastify.register(applicationsRoutes);
-    fastify.register(usersRoutes);
     fastify.register(spacesRoutes);
     fastify.register(authRoutes);
 

@@ -4,7 +4,8 @@ import { config } from 'dotenv';
 import { client } from './db/mongodb.js';
 import applicationsRoutes from './routes/applications.js';
 import spacesRoutes from './routes/spaces.js';
-import authRoutes from './routes/authRoutes.js';
+import authRoutes from './routes/auth.js';
+import usersRoutes from './routes/users.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fastifyJwt from '@fastify/jwt';
@@ -58,6 +59,7 @@ const startServer = async () => {
     fastify.register(applicationsRoutes);
     fastify.register(spacesRoutes);
     fastify.register(authRoutes);
+    fastify.register(usersRoutes);
 
     await fastify.listen({
       port: parseInt(process.env.PORT) || 3000,

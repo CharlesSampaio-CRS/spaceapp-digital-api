@@ -7,12 +7,10 @@ const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
 
 export const register = async (request, reply) => {
-  const { username, email, password, plan = 'free', active = true } = request.body;
+  const { name, email, password, plan = 'free', active = true } = request.body;
 
   try {
-    const existingUser = await userCollection.findOne({
-      $or: [{ username }, { email }]
-    });
+    const existingUser = await userCollection.findOne({ email });
 
     if (existingUser) {
       return reply.status(400).send({ error: 'Usuário ou e-mail já cadastrado.' });
@@ -22,7 +20,7 @@ export const register = async (request, reply) => {
 
     const newUser = {
       uuid: uuidv4(),
-      username,
+      name,
       email,
       password: hashedPassword,
       plan,
@@ -48,10 +46,10 @@ export const register = async (request, reply) => {
 };
 
 export const login = async (request, reply) => {
-  const { username, password } = request.body;
+  const { email, password } = request.body;
 
   try {
-    const user = await userCollection.findOne({ username });
+    const user = await userCollection.findOne({ email });
 
     if (!user) {
       return reply.status(401).send({ error: 'Usuário não encontrado' });
@@ -65,7 +63,7 @@ export const login = async (request, reply) => {
 
     const token = await reply.jwtSign({
       uuid: user.uuid,
-      username: user.username,
+      name: user.name,
       email: user.email
     });
 

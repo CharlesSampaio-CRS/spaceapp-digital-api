@@ -1,4 +1,3 @@
-// src/routes/authRoutes.js
 import { 
   register, 
   login

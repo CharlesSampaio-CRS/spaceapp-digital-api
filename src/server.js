@@ -1,11 +1,10 @@
-// server.js
 import Fastify from 'fastify';
 import { config } from 'dotenv';
 import { client } from './db/mongodb.js';
-import applicationsRoutes from './routes/applications.js';
-import spacesRoutes from './routes/spaces.js';
-import authRoutes from './routes/auth.js';
-import usersRoutes from './routes/users.js';
+import applicationsRoutes from './routes/applicationsRoutes.js';
+import spacesRoutes from './routes/spacesRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import usersRoutes from './routes/usersRoutes.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fastifyJwt from '@fastify/jwt';

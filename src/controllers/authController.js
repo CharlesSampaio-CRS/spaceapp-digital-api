@@ -1,4 +1,3 @@
-// src/controllers/authController.js
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { client } from '../db/mongodb.js';
@@ -13,7 +12,7 @@ export const register = async (request, reply) => {
     const existingUser = await userCollection.findOne({ email });
 
     if (existingUser) {
-      return reply.status(400).send({ error: 'Usuário ou e-mail já cadastrado.' });
+      return reply.status(409).send({ error: 'User or email already registered.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -34,12 +33,12 @@ export const register = async (request, reply) => {
     await userCollection.insertOne(newUser);
 
     return reply.code(201).send({
-      message: 'Usuário registrado com sucesso',
+      message: 'User registered successfully.',
       uuid: newUser.uuid
     });
   } catch (err) {
     return reply.status(500).send({
-      error: 'Erro ao registrar usuário',
+      error: 'Failed to register user.',
       details: err.message
     });
   }
@@ -52,13 +51,13 @@ export const login = async (request, reply) => {
     const user = await userCollection.findOne({ email });
 
     if (!user) {
-      return reply.status(401).send({ error: 'Usuário não encontrado' });
+      return reply.status(401).send({ error: 'User not found.' });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return reply.status(401).send({ error: 'Senha inválida' });
+      return reply.status(401).send({ error: 'Invalid password.' });
     }
 
     const token = await reply.jwtSign({
@@ -70,7 +69,7 @@ export const login = async (request, reply) => {
     return reply.send({ token });
   } catch (err) {
     return reply.status(500).send({
-      error: 'Erro ao fazer login',
+      error: 'Login failed.',
       details: err.message
     });
   }

@@ -63,7 +63,10 @@ export const login = async (request, reply) => {
     const token = await reply.jwtSign({
       uuid: user.uuid,
       name: user.name,
-      email: user.email
+      email: user.email,
+      plan: user.plan,
+      type: user.type,
+      googleId: user.googleId
     });
 
     return reply.send({ token });

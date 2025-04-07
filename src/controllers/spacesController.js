@@ -87,16 +87,17 @@ export const getSpaceByUserUuid = async (request, reply) => {
   const { userUuid } = request.params;
 
   try {
-    const [space] = await spaceCollection.aggregate([
+
+    const space = await spaceCollection.aggregate([
       {
         $match: { userUuid } 
       },
       {
         $lookup: {
-          from: 'applications',
+          from: 'applications', 
           localField: 'applicationsUuid', 
-          foreignField: 'uuid',         
-          as: 'applications'
+          foreignField: 'applicationsUuid', 
+          as: 'applications' 
         }
       }
     ]).toArray();

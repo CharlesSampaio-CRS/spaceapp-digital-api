@@ -117,6 +117,37 @@ export const getSpaceById = async (request, reply) => {
   }
 };
 
+export const getSpaceByUserUuid = async (request, reply) => {
+  const { userUuid } = request.params;
+
+  try {
+    const [space] = await spaceCollection.aggregate([
+      {
+        $match: { userUuid } 
+      },
+      {
+        $lookup: {
+          from: 'applications',
+          localField: 'applicationsUuid', 
+          foreignField: 'uuid',         
+          as: 'applications'
+        }
+      }
+    ]).toArray();
+
+    if (!space) {
+      return reply.status(404).send({ error: 'Space not found for this user!' });
+    }
+
+    return reply.send(space);
+  } catch (err) {
+    return reply.status(500).send({
+      error: 'Error fetching space with applications by userUuid',
+      details: err.message
+    });
+  }
+};
+
 
 export const updateSpace = async (request, reply) => {
   const { uuid } = request.params;

@@ -173,15 +173,3 @@ export const deactivateSpace = async (request, reply) => {
   }
 };
 
-export const flushDatabase = async (_request, reply) => {
-  try {
-    await Promise.all([
-      spaceCollection.deleteMany({}),
-      userCollection.deleteMany({}), 
-      appCollection.deleteMany({}), 
-    ]);
-    return reply.send({ message: 'All data has been deleted successfully!' });
-  } catch (err) {
-    return reply.status(500).send({ error: 'Error deleting data', details: err.message });
-  }
-};

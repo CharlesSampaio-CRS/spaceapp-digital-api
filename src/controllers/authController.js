@@ -4,6 +4,9 @@ import { client } from '../db/mongodb.js';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
+const spaceCollection = db.collection('spaces');
+const applicationCollection = db.collection('applications');
+
 
 export const register = async (request, reply) => {
   const { name, email, password, plan = 'free', active = true, googleId } = request.body;
@@ -32,9 +35,20 @@ export const register = async (request, reply) => {
 
     await userCollection.insertOne(newUser);
 
+    const applications = await applicationCollection.find({ base: true }).toArray();
+    console.log(applications)
+    const space = {
+      userUuid: newUser.uuid,
+      applications: applications.map(app => app.uuid),
+      createdAt: new Date(),
+      updatedAt: null
+    };
+
+    await spaceCollection.insertOne(space);
     return reply.code(201).send({
       message: 'User registered successfully.',
-      uuid: newUser.uuid
+      userUuid: newUser.uuid,
+      spaceUuid: space.uuid
     });
   } catch (err) {
     return reply.status(500).send({

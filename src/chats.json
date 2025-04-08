@@ -1,0 +1,107 @@
+[
+  {
+    "application": "WhatsApp",
+    "url": "https://web.whatsapp.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg",
+    "type": "web",
+    "base": true,
+    "popularity": 1
+  },
+  {
+    "application": "Telegram",
+    "url": "https://web.telegram.org",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+    "type": "web",
+    "popularity": 2
+  },
+  {
+    "application": "Facebook",
+    "url": "https://www.messenger.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/8/83/Facebook_Messenger_4_Logo.svg",
+    "type": "web",
+    "popularity": 3
+  },
+  {
+    "application": "Slack",
+    "url": "https://slack.com/signin",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png",
+    "type": "web",
+    "popularity": 4
+  },
+  {
+    "application": "Discord",
+    "url": "https://discord.com/app",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo.svg",
+    "type": "web",
+    "popularity": 5
+  },
+  {
+    "application": "Teams",
+    "url": "https://teams.microsoft.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg",
+    "type": "web",
+    "popularity": 6
+  },
+  {
+    "application": "Google",
+    "url": "https://chat.google.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Google_Chat_icon_%282020%29.svg",
+    "type": "web",
+    "popularity": 7
+  },
+  {
+    "application": "Skype",
+    "url": "https://web.skype.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Skype_icon_2019.svg",
+    "type": "web",
+    "popularity": 8
+  },
+  {
+    "application": "WeChat",
+    "url": "https://web.wechat.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/3/3e/WeChat_Logo.svg",
+    "type": "web",
+    "popularity": 9
+  },
+  {
+    "application": "Snapchat",
+    "url": "https://web.snapchat.com",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/en/a/ad/Snapchat_logo.svg",
+    "type": "web",
+    "popularity": 10
+  },
+  {
+    "application": "LinkedIn",
+    "url": "https://www.linkedin.com/messaging/",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png",
+    "type": "web",
+    "popularity": 11
+  },
+  {
+    "application": "Twitter",
+    "url": "https://twitter.com/messages",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Logo_of_Twitter.svg",
+    "type": "web",
+    "popularity": 12
+  },
+  {
+    "application": "Threads",
+    "url": "https://www.threads.net/",
+    "active": true,
+    "icon": "https://upload.wikimedia.org/wikipedia/commons/8/89/Threads_%28app%29_logo.svg",
+    "type": "web",
+    "popularity": 13
+  }
+]

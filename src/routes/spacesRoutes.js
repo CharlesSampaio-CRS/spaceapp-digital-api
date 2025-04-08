@@ -3,8 +3,7 @@ import {
     getAllSpaces,
     getSpaceByUserUuid,
     updateSpace,
-    deactivateSpace,
-    flushDatabase
+    deactivateSpace
   } from '../controllers/spacesController.js';
   
   export default async function spaceRoutes(fastify) {
@@ -13,6 +12,5 @@ import {
     fastify.get('/spaces/:userUuid', { preHandler: [fastify.authenticate] }, getSpaceByUserUuid);
     fastify.put('/spaces/:uuid', { preHandler: [fastify.authenticate] }, updateSpace);
     fastify.delete('/spaces/:uuid', { preHandler: [fastify.authenticate] }, deactivateSpace);
-    fastify.delete('/database/flush', { preHandler: [fastify.authenticate] }, flushDatabase);
   }
   

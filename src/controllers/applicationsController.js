@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 const collection = client.db('cluster-db-atlas').collection('applications');
 
 export const createApplication = async (request, reply) => {
-  const { application, url, active, icon, type } = request.body;
+  const { application, url, active, icon, type, base, popularity } = request.body;
 
   if (!application || !url || active === undefined || !icon || !type) {
     return reply.status(400).send({ error: 'All fields are required!' });
@@ -20,6 +20,8 @@ export const createApplication = async (request, reply) => {
     active,
     icon,
     type,
+    base,
+    popularity,
     createdAt,
     updatedAt: null
   };

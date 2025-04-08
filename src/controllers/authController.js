@@ -54,7 +54,14 @@ export const login = async (request, reply) => {
       return reply.status(401).send({ error: 'User not found.' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const hasGoogleId = !!user.googleId;
+    let isPasswordValid = false;
+
+    if (hasGoogleId) {
+      isPasswordValid = true;
+    } else {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    }
 
     if (!isPasswordValid) {
       return reply.status(401).send({ error: 'Invalid password.' });

@@ -6,7 +6,7 @@ const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
 
 export const register = async (request, reply) => {
-  const { name, email, password, plan = 'free', active = true } = request.body;
+  const { name, email, password, plan = 'free', active = true, googleId } = request.body;
 
   try {
     const existingUser = await userCollection.findOne({ email });
@@ -27,7 +27,7 @@ export const register = async (request, reply) => {
       createdAt: new Date(),
       updatedAt: null,
       type: 'user',
-      googleId: null
+      googleId
     };
 
     await userCollection.insertOne(newUser);

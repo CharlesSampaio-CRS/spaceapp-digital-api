@@ -3,41 +3,60 @@ import { v4 as uuidv4 } from 'uuid';
 
 const collection = client.db('cluster-db-atlas').collection('applications');
 
-export const createApplication = async (request, reply) => {
-  const { application, url, active, icon, type, base, popularity } = request.body;
+import { v4 as uuidv4 } from 'uuid';
 
-  if (!application || !url || active === undefined || !icon || !type) {
-    return reply.status(400).send({ error: 'All fields are required!' });
+export const createApplications = async (request, reply) => {
+  const applications = request.body;
+
+  if (!Array.isArray(applications) || applications.length === 0) {
+    return reply.status(400).send({ error: 'An array of applications is required!' });
   }
 
-  const uuid = uuidv4();
-  const createdAt = new Date().toISOString();
+  const newApplications = [];
+  const duplicates = [];
 
-  const newApplication = {
-    uuid,
-    application,
-    url,
-    active,
-    icon,
-    type,
-    base,
-    popularity,
-    createdAt,
-    updatedAt: null
-  };
+  for (const app of applications) {
+    const { application, url, active, icon, type, base, popularity } = app;
 
-  try {
-    const existing = await collection.findOne({ application });
-    if (existing) {
-      return reply.status(409).send({ error: 'Application already registered!' });
+    if (!application || !url || active === undefined || !icon || !type) {
+      duplicates.push({ application, error: 'Missing required fields' });
+      continue;
     }
 
-    await collection.insertOne(newApplication);
-    return reply.status(201).send(newApplication);
+    const existing = await collection.findOne({ application });
+    if (existing) {
+      duplicates.push({ application, error: 'Application already exists' });
+      continue;
+    }
+
+    newApplications.push({
+      uuid: uuidv4(),
+      application,
+      url,
+      active,
+      icon,
+      type,
+      base,
+      popularity,
+      createdAt: new Date().toISOString(),
+      updatedAt: null
+    });
+  }
+
+  try {
+    if (newApplications.length > 0) {
+      await collection.insertMany(newApplications);
+    }
+
+    return reply.status(201).send({
+      created: newApplications,
+      skipped: duplicates
+    });
   } catch (err) {
-    return reply.status(500).send({ error: 'Error creating application', details: err.message });
+    return reply.status(500).send({ error: 'Error inserting applications', details: err.message });
   }
 };
+
 
 export const getAllApplications = async (_request, reply) => {
   try {

@@ -3,8 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 
 const collection = client.db('cluster-db-atlas').collection('applications');
 
-import { v4 as uuidv4 } from 'uuid';
-
 export const createApplications = async (request, reply) => {
   const applications = request.body;
 

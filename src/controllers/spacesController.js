@@ -87,45 +87,51 @@ export const getSpaceByUserUuid = async (request, reply) => {
   const { userUuid } = request.params;
 
   try {
-
-    const space = await spaceCollection.aggregate([
+    const result = await spaceCollection.aggregate([
       {
-        $match: { userUuid } 
+        $match: { userUuid }
       },
       {
         $lookup: {
-          from: 'applications', 
-          localField: 'applicationsUuid', 
-          foreignField: 'applicationsUuid', 
-          as: 'applications' 
+          from: 'applications',
+          localField: 'applications',
+          foreignField: 'uuid',
+          as: 'applications'
+        }
+      },
+      {
+        $project: {
+          _id: 1, 
+          uuid: 1,           // UUID do espaço
+          userUuid: 1,       // UUID do usuário
+          applications: 1    // Lista de aplicações completas
         }
       }
     ]).toArray();
 
-    if (!space) {
-      return reply.status(404).send({ error: 'Space not found for this user!' });
+    if (result.length === 0 || !result[0].applications.length) {
+      return reply.status(404).send({ error: 'No applications found for this user.' });
     }
 
-    return reply.send(space);
+    return reply.send(result[0]);
   } catch (err) {
     return reply.status(500).send({
-      error: 'Error fetching space with applications by userUuid',
+      error: 'Error fetching applications by userUuid',
       details: err.message
     });
   }
 };
 
-export const updateSpace = async (request, reply) => {
-  const { uuid } = request.params;
-  const { userUuid, applicationsUuid, active } = request.body;
+export const updateSpaceByUserUuid = async (request, reply) => {
+  const { userUuid } = request.params;
+  const { applicationsUuid, active } = request.body;
 
   try {
-    const space = await spaceCollection.findOne({ uuid });
+    const space = await spaceCollection.findOne({ userUuid });
     if (!space) return reply.status(404).send({ error: 'Space not found!' });
 
     const updateData = { updatedAt: new Date().toISOString() };
 
-    if (userUuid) updateData.userUuid = userUuid;
     if (active !== undefined) updateData.active = active;
 
     if (Array.isArray(applicationsUuid)) {
@@ -144,14 +150,15 @@ export const updateSpace = async (request, reply) => {
       updateData.applications = applicationsUuid;
     }
 
-    await spaceCollection.updateOne({ uuid }, { $set: updateData });
-    const updatedSpace = await spaceCollection.findOne({ uuid });
+    await spaceCollection.updateOne({ userUuid }, { $set: updateData });
+    const updatedSpace = await spaceCollection.findOne({ userUuid });
 
     return reply.send({ message: 'Space updated!', space: updatedSpace });
   } catch (err) {
     return reply.status(500).send({ error: 'Error updating space', details: err.message });
   }
 };
+
 
 export const deactivateSpace = async (request, reply) => {
   const { uuid } = request.params;

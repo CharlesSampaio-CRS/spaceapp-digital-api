@@ -123,42 +123,31 @@ export const getSpaceByUserUuid = async (request, reply) => {
 };
 
 export const updateSpaceByUserUuid = async (request, reply) => {
-  const { userUuid } = request.params;
-  const { applicationsUuid, active } = request.body;
+  const { userUuid, applicationsUuid } = request.body;
 
   try {
-    const space = await spaceCollection.findOne({ userUuid });
-    if (!space) return reply.status(404).send({ error: 'Space not found!' });
-
-    const updateData = { updatedAt: new Date().toISOString() };
-
-    if (active !== undefined) updateData.active = active;
-
-    if (Array.isArray(applicationsUuid)) {
-      const validApplications = await appCollection
-        .find({ uuid: { $in: applicationsUuid } })
-        .project({ uuid: 1 })
-        .toArray();
-
-      const validUuids = validApplications.map((app) => app.uuid);
-      if (validUuids.length !== applicationsUuid.length) {
-        return reply
-          .status(404)
-          .send({ error: 'One or more applications not found!' });
+    const result = await spaceCollection.updateOne(
+      { userUuid }, // Filtro
+      {
+        $set: {
+          applications: applicationsUuid,
+          updatedAt: new Date()
+        }
       }
+    );
 
-      updateData.applications = applicationsUuid;
+    if (result.matchedCount === 0) {
+      return reply.status(404).send({ error: 'Space not found for this userUuid.' });
     }
 
-    await spaceCollection.updateOne({ userUuid }, { $set: updateData });
-    const updatedSpace = await spaceCollection.findOne({ userUuid });
-
-    return reply.send({ message: 'Space updated!', space: updatedSpace });
+    return reply.send({ message: 'Space updated successfully.' });
   } catch (err) {
-    return reply.status(500).send({ error: 'Error updating space', details: err.message });
+    return reply.status(500).send({
+      error: 'Failed to update space.',
+      details: err.message
+    });
   }
 };
-
 
 export const deactivateSpace = async (request, reply) => {
   const { uuid } = request.params;

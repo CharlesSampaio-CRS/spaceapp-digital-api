@@ -12,10 +12,10 @@ export const getAllUsers = async (_request, reply) => {
   }
 };
 
-export const getUserById = async (request, reply) => {
+export const getUserByIdUuid = async (request, reply) => {
   const { id } = request.params;
   try {
-    const user = await userCollection.findOne({ uuid: id });
+    const user = await userCollection.findOne({ uuid: uuid });
     if (!user) {
       return reply.status(404).send({ error: 'User not found!' });
     }

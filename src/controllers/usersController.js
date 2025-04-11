@@ -13,7 +13,7 @@ export const getAllUsers = async (_request, reply) => {
 };
 
 export const getUserByIdUuid = async (request, reply) => {
-  const { id } = request.params;
+  const { uuid } = request.params;
   try {
     const user = await userCollection.findOne({ uuid: uuid });
     if (!user) {

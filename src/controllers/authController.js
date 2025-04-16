@@ -36,7 +36,6 @@ export const register = async (request, reply) => {
     await userCollection.insertOne(newUser);
 
     const applications = await applicationCollection.find({ base: true }).toArray();
-    console.log(applications)
     const space = {
       userUuid: newUser.uuid,
       applications: applications.map(app => app.uuid),
@@ -88,6 +87,8 @@ export const login = async (request, reply) => {
       plan: user.plan,
       type: user.type,
       googleId: user.googleId
+    }, {
+      expiresIn: '2h' 
     });
 
     return reply.send({ token });

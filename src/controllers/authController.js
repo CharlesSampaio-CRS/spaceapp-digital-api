@@ -35,7 +35,7 @@ export const register = async (request, reply) => {
 
     await userCollection.insertOne(newUser);
 
-    const applications = await applicationCollection.find({ base: true }).toArray();
+    const applications = await applicationCollection.find({ active: true }).toArray();
     const space = {
       userUuid: newUser.uuid,
       applications: applications.map(app => app.uuid),

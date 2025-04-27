@@ -1,7 +1,7 @@
 import { 
   createApplications, 
   getAllApplications, 
-  getApplicationById, 
+  getApplicationByApplication, 
   updateApplication, 
   deleteApplication 
 } from '../controllers/applicationsController.js';
@@ -9,7 +9,7 @@ import {
 export default async function applicationsRoutes(fastify) {
   fastify.post('/applications', { preHandler: [fastify.authenticate] }, createApplications);
   fastify.get('/applications', { preHandler: [fastify.authenticate] }, getAllApplications);
-  fastify.get('/applications/:uuid', { preHandler: [fastify.authenticate] }, getApplicationById);
+  fastify.get('/applications/:application', { preHandler: [fastify.authenticate] }, getApplicationByApplication);
   fastify.put('/applications/:uuid', { preHandler: [fastify.authenticate] }, updateApplication);
   fastify.delete('/applications/:uuid', { preHandler: [fastify.authenticate] }, deleteApplication);
 }

@@ -65,17 +65,21 @@ export const getAllApplications = async (_request, reply) => {
   }
 };
 
-export const getApplicationById = async (request, reply) => {
-  const { uuid } = request.params;
+export const getApplicationByApplication = async (request, reply) => {
+  const { application } = request.params;
+  console.log(application)
 
   try {
-    const app = await collection.findOne({ uuid });
+    const app = await collection.findOne({ 
+      application: { $regex: `^${application}$`, $options: 'i' } 
+    });
     if (!app) return reply.status(404).send({ error: 'Application not found' });
     return reply.send(app);
   } catch (err) {
     return reply.status(500).send({ error: 'Error fetching application', details: err.message });
   }
 };
+
 
 export const updateApplication = async (request, reply) => {
   const { uuid } = request.params;

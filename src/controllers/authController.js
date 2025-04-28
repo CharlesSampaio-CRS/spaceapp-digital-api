@@ -38,11 +38,19 @@ export const register = async (request, reply) => {
     const applications = await applicationCollection.find({ active: true }).toArray();
     const space = {
       userUuid: newUser.uuid,
-      applications: applications.map(app => app.uuid),
+      applications: applications.map(app => ({
+        uuid: app.uuid,
+        application: app.application,
+        icon : app.icon,
+        active: app.active,
+        url: app.url
+      })),
       createdAt: new Date(),
       updatedAt: null
     };
 
+    console.log(space)
+  
     await spaceCollection.insertOne(space);
     return reply.code(201).send({
       message: 'User registered successfully.',

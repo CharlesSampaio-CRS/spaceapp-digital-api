@@ -49,8 +49,6 @@ export const register = async (request, reply) => {
       updatedAt: null
     };
 
-    console.log(space)
-  
     await spaceCollection.insertOne(space);
     return reply.code(201).send({
       message: 'User registered successfully.',
@@ -88,7 +86,7 @@ export const login = async (request, reply) => {
       return reply.status(401).send({ error: 'Invalid password.' });
     }
 
-    const allApplications = await applicationsCollection.find({}).toArray();
+    const allApplications = await applicationCollection.find({}).toArray();
 
     const userApps = user.space?.applications || [];
     const userAppNames = userApps.map(app => app.application);

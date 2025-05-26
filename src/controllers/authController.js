@@ -88,6 +88,24 @@ export const login = async (request, reply) => {
       return reply.status(401).send({ error: 'Invalid password.' });
     }
 
+    const allApplications = await applicationsCollection.find({}).toArray();
+
+    const userApps = user.space?.applications || [];
+    const userAppNames = userApps.map(app => app.application);
+
+    const missingApps = allApplications.filter(app =>
+      !userAppNames.includes(app.application)
+    );
+
+    if (missingApps.length > 0) {
+      const updatedApplications = [...userApps, ...missingApps];
+
+      await userCollection.updateOne(
+        { email },
+        { $set: { 'space.applications': updatedApplications } }
+      );
+    }
+
     const token = await reply.jwtSign({
       uuid: user.uuid,
       name: user.name,

@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import { config } from 'dotenv';
 import { client } from './db/mongodb.js';
+import { createIndexes } from './db/indexes.js';
 import applicationsRoutes from './routes/applicationsRoutes.js';
 import spacesRoutes from './routes/spacesRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -54,6 +55,9 @@ fastify.decorate('authenticate', async (request, reply) => {
 const startServer = async () => {
   try {
     await client.connect();
+    
+    // Criar índices para otimização
+    await createIndexes();
 
     fastify.register(applicationsRoutes);
     fastify.register(spacesRoutes);

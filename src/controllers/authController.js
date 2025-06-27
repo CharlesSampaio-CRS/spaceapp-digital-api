@@ -7,58 +7,143 @@ const userCollection = db.collection('users');
 const spaceCollection = db.collection('spaces');
 const applicationCollection = db.collection('applications');
 
+// Projeção padrão para otimizar consultas
+const DEFAULT_PROJECTION = {
+  _id: 0,
+  __v: 0
+};
+
+// Validação de email básica
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Validação de senha básica
+const isValidPassword = (password) => {
+  return password && password.length >= 6;
+};
+
+// Validação de nome básica
+const isValidName = (name) => {
+  return name && name.trim().length >= 2;
+};
 
 export const register = async (request, reply) => {
   const { name, email, password, plan = 'free', active = true, googleId } = request.body;
 
+  // Validação de entrada
+  if (!isValidName(name)) {
+    return reply.status(400).send({ 
+      error: 'Nome deve ter pelo menos 2 caracteres' 
+    });
+  }
+
+  if (!isValidEmail(email)) {
+    return reply.status(400).send({ 
+      error: 'Email inválido' 
+    });
+  }
+
+  if (!googleId && !isValidPassword(password)) {
+    return reply.status(400).send({ 
+      error: 'Senha deve ter pelo menos 6 caracteres' 
+    });
+  }
+
+  // Validar plano
+  const validPlans = ['free', 'basic', 'premium', 'enterprise'];
+  if (!validPlans.includes(plan)) {
+    return reply.status(400).send({ 
+      error: 'Plano inválido. Deve ser: free, basic, premium ou enterprise' 
+    });
+  }
+
   try {
-    const existingUser = await userCollection.findOne({ email });
+    // Verificar se usuário já existe
+    const existingUser = await userCollection.findOne(
+      { email }, 
+      { projection: { uuid: 1, email: 1 } }
+    );
 
     if (existingUser) {
-      return reply.status(409).send({ error: 'User or email already registered.' });
+      return reply.status(409).send({ error: 'Usuário ou email já registrado' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = googleId ? null : await bcrypt.hash(password, 10);
+    const uuid = uuidv4();
+    const createdAt = new Date().toISOString();
 
     const newUser = {
-      uuid: uuidv4(),
-      name,
-      email,
+      uuid,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
       plan,
       active,
-      createdAt: new Date(),
+      createdAt,
       updatedAt: null,
       type: 'user',
       googleId
     };
 
-    await userCollection.insertOne(newUser);
+    // Buscar aplicações ativas em paralelo com a criação do usuário
+    const [applications] = await Promise.all([
+      applicationCollection.find({ active: true }).project({ 
+        uuid: 1, 
+        application: 1, 
+        icon: 1, 
+        url: 1, 
+        active: 1 
+      }).toArray(),
+      userCollection.insertOne(newUser)
+    ]);
 
-    const applications = await applicationCollection.find({ active: true }).toArray();
+    // Criar espaço do usuário
     const space = {
+      uuid: uuidv4(),
       userUuid: newUser.uuid,
       applications: applications.map(app => ({
         uuid: app.uuid,
         application: app.application,
-        icon : app.icon,
+        icon: app.icon,
         active: app.active,
         url: app.url
       })),
-      createdAt: new Date(),
+      active: true,
+      createdAt,
       updatedAt: null
     };
 
     await spaceCollection.insertOne(space);
+
+    // Retornar dados sem informações sensíveis
+    const userResponse = {
+      uuid: newUser.uuid,
+      name: newUser.name,
+      email: newUser.email,
+      plan: newUser.plan,
+      active: newUser.active,
+      type: newUser.type,
+      createdAt: newUser.createdAt
+    };
+
     return reply.code(201).send({
-      message: 'User registered successfully.',
-      userUuid: newUser.uuid,
-      spaceUuid: space.uuid
+      success: true,
+      data: {
+        user: userResponse,
+        space: {
+          uuid: space.uuid,
+          applicationsCount: space.applications.length
+        }
+      },
+      message: 'Usuário registrado com sucesso'
     });
   } catch (err) {
+    console.error('Error registering user:', err);
     return reply.status(500).send({
-      error: 'Failed to register user.',
-      details: err.message
+      error: 'Erro ao registrar usuário',
+      details: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
     });
   }
 };
@@ -66,44 +151,88 @@ export const register = async (request, reply) => {
 export const login = async (request, reply) => {
   const { email, password } = request.body;
 
+  // Validação de entrada
+  if (!isValidEmail(email)) {
+    return reply.status(400).send({ 
+      error: 'Email inválido' 
+    });
+  }
+
+  if (!password) {
+    return reply.status(400).send({ 
+      error: 'Senha é obrigatória' 
+    });
+  }
+
   try {
-    const user = await userCollection.findOne({ email });
+    const user = await userCollection.findOne({ 
+      email: email.toLowerCase().trim() 
+    });
 
     if (!user) {
-      return reply.status(401).send({ error: 'User not found.' });
+      return reply.status(401).send({ error: 'Usuário não encontrado' });
+    }
+
+    if (!user.active) {
+      return reply.status(401).send({ error: 'Usuário desativado' });
     }
 
     const hasGoogleId = !!user.googleId;
     let isPasswordValid = false;
 
     if (hasGoogleId) {
+      // Para usuários Google, aceitar qualquer senha (ou implementar lógica específica)
       isPasswordValid = true;
     } else {
+      if (!user.password) {
+        return reply.status(401).send({ error: 'Conta não configurada para login com senha' });
+      }
       isPasswordValid = await bcrypt.compare(password, user.password);
     }
 
     if (!isPasswordValid) {
-      return reply.status(401).send({ error: 'Invalid password.' });
+      return reply.status(401).send({ error: 'Senha inválida' });
     }
 
-    const allApplications = await applicationCollection.find({}).toArray();
+    // Buscar aplicações e espaço em paralelo
+    const [allApplications, userSpace] = await Promise.all([
+      applicationCollection.find({ active: true }).project({ 
+        uuid: 1, 
+        application: 1, 
+        icon: 1, 
+        url: 1, 
+        active: 1 
+      }).toArray(),
+      spaceCollection.findOne({ userUuid: user.uuid }, { projection: DEFAULT_PROJECTION })
+    ]);
 
-    const userApps = user.space?.applications || [];
-    const userAppNames = userApps.map(app => app.application);
-
-    const missingApps = allApplications.filter(app =>
-      !userAppNames.includes(app.application)
-    );
-
-    if (missingApps.length > 0) {
-      const updatedApplications = [...userApps, ...missingApps];
-
-      await userCollection.updateOne(
-        { email },
-        { $set: { 'space.applications': updatedApplications } }
+    // Atualizar aplicações do usuário se necessário
+    if (userSpace && allApplications.length > 0) {
+      const userAppNames = userSpace.applications.map(app => app.application);
+      const missingApps = allApplications.filter(app =>
+        !userAppNames.includes(app.application)
       );
+
+      if (missingApps.length > 0) {
+        const updatedApplications = [
+          ...userSpace.applications,
+          ...missingApps.map(app => ({
+            uuid: app.uuid,
+            application: app.application,
+            icon: app.icon,
+            url: app.url,
+            active: app.active
+          }))
+        ];
+
+        await spaceCollection.updateOne(
+          { userUuid: user.uuid },
+          { $set: { applications: updatedApplications, updatedAt: new Date().toISOString() } }
+        );
+      }
     }
 
+    // Gerar token JWT
     const token = await reply.jwtSign({
       uuid: user.uuid,
       name: user.name,
@@ -115,11 +244,25 @@ export const login = async (request, reply) => {
       expiresIn: '2h' 
     });
 
-    return reply.send({ token });
+    return reply.send({
+      success: true,
+      data: {
+        token,
+        user: {
+          uuid: user.uuid,
+          name: user.name,
+          email: user.email,
+          plan: user.plan,
+          type: user.type
+        }
+      },
+      message: 'Login realizado com sucesso'
+    });
   } catch (err) {
+    console.error('Error during login:', err);
     return reply.status(500).send({
-      error: 'Login failed.',
-      details: err.message
+      error: 'Erro no login',
+      details: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
     });
   }
 };

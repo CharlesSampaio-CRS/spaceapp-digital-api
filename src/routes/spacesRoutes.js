@@ -5,12 +5,29 @@ import {
     updateSpaceByUserUuid,
     deactivateSpace
   } from '../controllers/spacesController.js';
+import { cacheMiddleware } from '../middlewares/cache.js';
   
-  export default async function spaceRoutes(fastify) {
-    fastify.post('/spaces', { preHandler: [fastify.authenticate] }, createSpace);
-    fastify.get('/spaces', { preHandler: [fastify.authenticate] }, getAllSpaces);
-    fastify.get('/spaces/:userUuid', { preHandler: [fastify.authenticate] }, getSpaceByUserUuid);
-    fastify.put('/spaces', { preHandler: [fastify.authenticate] }, updateSpaceByUserUuid);
-    fastify.delete('/spaces/:uuid', { preHandler: [fastify.authenticate] }, deactivateSpace);
-  }
+export default async function spaceRoutes(fastify) {
+  // Rotas de leitura com cache
+  fastify.get('/spaces', { 
+    preHandler: [fastify.authenticate, cacheMiddleware()] 
+  }, getAllSpaces);
+  
+  fastify.get('/spaces/:userUuid', { 
+    preHandler: [fastify.authenticate, cacheMiddleware()] 
+  }, getSpaceByUserUuid);
+  
+  // Rotas de escrita sem cache
+  fastify.post('/spaces', { 
+    preHandler: [fastify.authenticate] 
+  }, createSpace);
+  
+  fastify.put('/spaces', { 
+    preHandler: [fastify.authenticate] 
+  }, updateSpaceByUserUuid);
+  
+  fastify.delete('/spaces/:uuid', { 
+    preHandler: [fastify.authenticate] 
+  }, deactivateSpace);
+}
   

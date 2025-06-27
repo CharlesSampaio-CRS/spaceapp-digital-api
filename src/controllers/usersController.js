@@ -1,4 +1,5 @@
 import { client } from '../db/mongodb.js';
+import { PaginationHelper, paginatedResponse } from '../utils/pagination.js';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
@@ -21,18 +22,31 @@ const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
-export const getAllUsers = async (_request, reply) => {
+export const getAllUsers = async (request, reply) => {
   try {
-    // Usar projeção para retornar apenas campos necessários
-    const users = await userCollection
-      .find({}, { projection: DEFAULT_PROJECTION })
-      .toArray();
+    // Extrair parâmetros de paginação
+    const page = parseInt(request.query.page) || 1;
+    const limit = parseInt(request.query.limit) || 20;
+    const pagination = new PaginationHelper(page, limit);
+
+    // Executar consultas em paralelo para melhor performance
+    const [users, totalCount] = await Promise.all([
+      userCollection
+        .find({}, { projection: DEFAULT_PROJECTION })
+        .skip(pagination.skip)
+        .limit(pagination.limit)
+        .toArray(),
+      userCollection.countDocuments({})
+    ]);
     
-    return reply.send({
-      success: true,
-      data: users,
-      count: users.length
-    });
+    const paginationData = pagination.getResponse(totalCount);
+    
+    return reply.send(paginatedResponse(
+      users, 
+      paginationData, 
+      `${request.protocol}://${request.hostname}${request.url.split('?')[0]}`,
+      request.query
+    ));
   } catch (err) {
     console.error('Error fetching users:', err);
     return reply.status(500).send({ 

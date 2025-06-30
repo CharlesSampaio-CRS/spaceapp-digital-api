@@ -12,6 +12,7 @@ import usersRoutes from './routes/usersRoutes.js';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import fastifyJwt from '@fastify/jwt';
+import cors from '@fastify/cors';
 
 config();
 
@@ -38,11 +39,11 @@ const fastify = Fastify({
 fastify.register(swagger, {
   swagger: {
     info: {
-      title: 'API Otimizada',
-      description: 'API com otimizações de performance',
+      title: 'API SpaceHub',
+      description: 'API SpaceHub apps and flows',
       version: '1.0.0',
     },
-    host: `${process.env.HOST}:${process.env.PORT}`,
+    host: process.env.HOST ? `${process.env.HOST}:${process.env.PORT}` : undefined,
     schemes: [process.env.NODE_ENV === 'production' ? 'https' : 'http'],
     consumes: ['application/json'],
     produces: ['application/json'],
@@ -235,6 +236,11 @@ const startServer = async () => {
         memory: process.memoryUsage(),
         uptime: process.uptime()
       });
+    });
+
+    await fastify.register(cors, {
+      origin: true,
+      credentials: true
     });
 
     await fastify.listen({

@@ -30,13 +30,13 @@ export default async function applicationsRoutes(fastify) {
           type: 'object',
           required: ['application', 'url', 'active', 'icon', 'type'],
           properties: {
-            application: { type: 'string', minLength: 2, example: 'App Teste' },
-            url: { type: 'string', example: 'https://app.com' },
-            active: { type: 'boolean', example: true },
-            icon: { type: 'string', example: 'https://app.com/icon.png' },
-            type: { type: 'string', example: 'web' },
-            base: { type: 'string', nullable: true, example: 'https://base.com' },
-            popularity: { type: 'integer', example: 0 }
+            application: { type: 'string', minLength: 2 },
+            url: { type: 'string' },
+            active: { type: 'boolean' },
+            icon: { type: 'string' },
+            type: { type: 'string' },
+            base: { type: 'string', nullable: true },
+            popularity: { type: 'integer' }
           }
         }
       },
@@ -57,13 +57,13 @@ export default async function applicationsRoutes(fastify) {
       body: {
         type: 'object',
         properties: {
-          application: { type: 'string', minLength: 2, example: 'App Teste' },
-          url: { type: 'string', example: 'https://app.com' },
-          active: { type: 'boolean', example: true },
-          icon: { type: 'string', example: 'https://app.com/icon.png' },
-          type: { type: 'string', example: 'web' },
-          base: { type: 'string', nullable: true, example: 'https://base.com' },
-          popularity: { type: 'integer', example: 0 }
+          application: { type: 'string', minLength: 2 },
+          url: { type: 'string' },
+          active: { type: 'boolean' },
+          icon: { type: 'string' },
+          type: { type: 'string' },
+          base: { type: 'string', nullable: true },
+          popularity: { type: 'integer' }
         }
       },
       response: {

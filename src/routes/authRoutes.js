@@ -12,12 +12,12 @@ export default async function authRoutes(fastify, options) {
         type: 'object',
         required: ['name', 'email', 'password'],
         properties: {
-          name: { type: 'string', minLength: 2, example: 'João da Silva' },
-          email: { type: 'string', format: 'email', example: 'joao@email.com' },
-          password: { type: 'string', minLength: 6, example: 'senha123' },
-          plan: { type: 'string', enum: ['free', 'basic', 'premium', 'enterprise'], example: 'free' },
-          active: { type: 'boolean', example: true },
-          googleId: { type: 'string', nullable: true, example: 'google-oauth-id' }
+          name: { type: 'string', minLength: 2 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 6 },
+          plan: { type: 'string', enum: ['free', 'basic', 'premium', 'enterprise'] },
+          active: { type: 'boolean' },
+          googleId: { type: 'string', nullable: true }
         }
       },
       response: {
@@ -37,8 +37,8 @@ export default async function authRoutes(fastify, options) {
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'joao@email.com' },
-          password: { type: 'string', example: 'senha123' }
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string' }
         }
       },
       response: {

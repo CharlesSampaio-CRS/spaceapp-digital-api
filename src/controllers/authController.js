@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { client } from '../db/mongodb.js';
+import { isValidEmail, isValidPassword, isValidName } from '../utils/validators.js';
 
 const db = client.db('cluster-db-atlas');
 const userCollection = db.collection('users');
@@ -13,67 +14,49 @@ const DEFAULT_PROJECTION = {
   __v: 0
 };
 
-// Validação de email básica
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+// Helpers internos
+const validPlans = ['free', 'basic', 'premium', 'enterprise'];
 
-// Validação de senha básica
-const isValidPassword = (password) => {
-  return password && password.length >= 6;
-};
+function errorResponse(reply, status, error, details = undefined) {
+  const resp = { error };
+  if (details) resp.details = details;
+  return reply.status(status).send(resp);
+}
 
-// Validação de nome básica
-const isValidName = (name) => {
-  return name && name.trim().length >= 2;
-};
+function successResponse(reply, status, data, message) {
+  return reply.code(status).send({ success: true, data, message });
+}
 
 export const register = async (request, reply) => {
   const { name, email, password, plan = 'free', active = true, googleId } = request.body;
 
   // Validação de entrada
   if (!isValidName(name)) {
-    return reply.status(400).send({ 
-      error: 'Nome deve ter pelo menos 2 caracteres' 
-    });
+    return errorResponse(reply, 400, 'Nome deve ter pelo menos 2 caracteres');
   }
-
   if (!isValidEmail(email)) {
-    return reply.status(400).send({ 
-      error: 'Email inválido' 
-    });
+    return errorResponse(reply, 400, 'Email inválido');
   }
-
   if (!googleId && !isValidPassword(password)) {
-    return reply.status(400).send({ 
-      error: 'Senha deve ter pelo menos 6 caracteres' 
-    });
+    return errorResponse(reply, 400, 'Senha deve ter pelo menos 6 caracteres');
   }
-
-  // Validar plano
-  const validPlans = ['free', 'basic', 'premium', 'enterprise'];
   if (!validPlans.includes(plan)) {
-    return reply.status(400).send({ 
-      error: 'Plano inválido. Deve ser: free, basic, premium ou enterprise' 
-    });
+    return errorResponse(reply, 400, 'Plano inválido. Deve ser: free, basic, premium ou enterprise');
   }
 
   try {
     // Verificar se usuário já existe
     const existingUser = await userCollection.findOne(
-      { email }, 
+      { email },
       { projection: { uuid: 1, email: 1 } }
     );
-
     if (existingUser) {
-      return reply.status(409).send({ error: 'Usuário ou email já registrado' });
+      return errorResponse(reply, 409, 'Usuário ou email já registrado');
     }
 
     const hashedPassword = googleId ? null : await bcrypt.hash(password, 10);
     const uuid = uuidv4();
     const createdAt = new Date().toISOString();
-
     const newUser = {
       uuid,
       name: name.trim(),
@@ -89,12 +72,12 @@ export const register = async (request, reply) => {
 
     // Buscar aplicações ativas em paralelo com a criação do usuário
     const [applications] = await Promise.all([
-      applicationCollection.find({ active: true }).project({ 
-        uuid: 1, 
-        application: 1, 
-        icon: 1, 
-        url: 1, 
-        active: 1 
+      applicationCollection.find({ active: true }).project({
+        uuid: 1,
+        application: 1,
+        icon: 1,
+        url: 1,
+        active: 1
       }).toArray(),
       userCollection.insertOne(newUser)
     ]);
@@ -114,7 +97,6 @@ export const register = async (request, reply) => {
       createdAt,
       updatedAt: null
     };
-
     await spaceCollection.insertOne(space);
 
     // Retornar dados sem informações sensíveis
@@ -128,23 +110,21 @@ export const register = async (request, reply) => {
       createdAt: newUser.createdAt
     };
 
-    return reply.code(201).send({
-      success: true,
-      data: {
-        user: userResponse,
-        space: {
-          uuid: space.uuid,
-          applicationsCount: space.applications.length
-        }
-      },
-      message: 'Usuário registrado com sucesso'
-    });
+    return successResponse(reply, 201, {
+      user: userResponse,
+      space: {
+        uuid: space.uuid,
+        applicationsCount: space.applications.length
+      }
+    }, 'Usuário registrado com sucesso');
   } catch (err) {
     console.error('Error registering user:', err);
-    return reply.status(500).send({
-      error: 'Erro ao registrar usuário',
-      details: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
-    });
+    return errorResponse(
+      reply,
+      500,
+      'Erro ao registrar usuário',
+      process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
+    );
   }
 };
 
@@ -153,55 +133,44 @@ export const login = async (request, reply) => {
 
   // Validação de entrada
   if (!isValidEmail(email)) {
-    return reply.status(400).send({ 
-      error: 'Email inválido' 
-    });
+    return errorResponse(reply, 400, 'Email inválido');
   }
-
   if (!password) {
-    return reply.status(400).send({ 
-      error: 'Senha é obrigatória' 
-    });
+    return errorResponse(reply, 400, 'Senha é obrigatória');
   }
 
   try {
-    const user = await userCollection.findOne({ 
-      email: email.toLowerCase().trim() 
+    const user = await userCollection.findOne({
+      email: email.toLowerCase().trim()
     });
-
     if (!user) {
-      return reply.status(401).send({ error: 'Usuário não encontrado' });
+      return errorResponse(reply, 401, 'Usuário não encontrado');
     }
-
     if (!user.active) {
-      return reply.status(401).send({ error: 'Usuário desativado' });
+      return errorResponse(reply, 401, 'Usuário desativado');
     }
-
     const hasGoogleId = !!user.googleId;
     let isPasswordValid = false;
-
     if (hasGoogleId) {
-      // Para usuários Google, aceitar qualquer senha (ou implementar lógica específica)
       isPasswordValid = true;
     } else {
       if (!user.password) {
-        return reply.status(401).send({ error: 'Conta não configurada para login com senha' });
+        return errorResponse(reply, 401, 'Conta não configurada para login com senha');
       }
       isPasswordValid = await bcrypt.compare(password, user.password);
     }
-
     if (!isPasswordValid) {
-      return reply.status(401).send({ error: 'Senha inválida' });
+      return errorResponse(reply, 401, 'Senha inválida');
     }
 
     // Buscar aplicações e espaço em paralelo
     const [allApplications, userSpace] = await Promise.all([
-      applicationCollection.find({ active: true }).project({ 
-        uuid: 1, 
-        application: 1, 
-        icon: 1, 
-        url: 1, 
-        active: 1 
+      applicationCollection.find({ active: true }).project({
+        uuid: 1,
+        application: 1,
+        icon: 1,
+        url: 1,
+        active: 1
       }).toArray(),
       spaceCollection.findOne({ userUuid: user.uuid }, { projection: DEFAULT_PROJECTION })
     ]);
@@ -212,7 +181,6 @@ export const login = async (request, reply) => {
       const missingApps = allApplications.filter(app =>
         !userAppNames.includes(app.application)
       );
-
       if (missingApps.length > 0) {
         const updatedApplications = [
           ...userSpace.applications,
@@ -224,7 +192,6 @@ export const login = async (request, reply) => {
             active: app.active
           }))
         ];
-
         await spaceCollection.updateOne(
           { userUuid: user.uuid },
           { $set: { applications: updatedApplications, updatedAt: new Date().toISOString() } }
@@ -241,28 +208,26 @@ export const login = async (request, reply) => {
       type: user.type,
       googleId: user.googleId
     }, {
-      expiresIn: '2h' 
+      expiresIn: '2h'
     });
 
-    return reply.send({
-      success: true,
-      data: {
-        token,
-        user: {
-          uuid: user.uuid,
-          name: user.name,
-          email: user.email,
-          plan: user.plan,
-          type: user.type
-        }
-      },
-      message: 'Login realizado com sucesso'
-    });
+    return successResponse(reply, 200, {
+      token,
+      user: {
+        uuid: user.uuid,
+        name: user.name,
+        email: user.email,
+        plan: user.plan,
+        type: user.type
+      }
+    }, 'Login realizado com sucesso');
   } catch (err) {
     console.error('Error during login:', err);
-    return reply.status(500).send({
-      error: 'Erro no login',
-      details: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
-    });
+    return errorResponse(
+      reply,
+      500,
+      'Erro no login',
+      process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'
+    );
   }
 };

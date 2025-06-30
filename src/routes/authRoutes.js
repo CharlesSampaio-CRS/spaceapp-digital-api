@@ -44,7 +44,20 @@ export default async function authRoutes(fastify, options) {
       response: {
         200: {
           description: 'Login realizado com sucesso',
-          type: 'object'
+          type: 'object',
+          properties: {
+            token: { type: 'string' },
+            user: {
+              type: 'object',
+              properties: {
+                uuid: { type: 'string' },
+                name: { type: 'string' },
+                email: { type: 'string' },
+                plan: { type: 'string' },
+                type: { type: 'string' }
+              }
+            }
+          }
         }
       }
     }

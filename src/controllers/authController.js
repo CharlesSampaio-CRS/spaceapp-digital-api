@@ -211,7 +211,8 @@ export const login = async (request, reply) => {
       expiresIn: '2h'
     });
 
-    return successResponse(reply, 200, {
+    // Retornar diretamente o objeto esperado
+    return reply.code(200).send({
       token,
       user: {
         uuid: user.uuid,
@@ -220,7 +221,7 @@ export const login = async (request, reply) => {
         plan: user.plan,
         type: user.type
       }
-    }, 'Login realizado com sucesso');
+    });
   } catch (err) {
     console.error('Error during login:', err);
     return errorResponse(

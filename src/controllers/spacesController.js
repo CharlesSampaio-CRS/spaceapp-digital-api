@@ -91,11 +91,8 @@ export const createSpace = async (request, reply) => {
 
     await spaceCollection.insertOne(newSpace);
     
-    return reply.status(201).send({
-      success: true,
-      data: newSpace,
-      message: 'Espaço criado com sucesso'
-    });
+    // Retornar diretamente o objeto criado
+    return reply.status(201).send(newSpace);
   } catch (err) {
     console.error('Error creating space:', err);
     return reply.status(500).send({ 

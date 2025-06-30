@@ -119,13 +119,11 @@ export const createApplications = async (request, reply) => {
       await collection.insertMany(newApplications);
     }
 
+    // Retornar diretamente o objeto esperado
     return reply.status(201).send({
-      success: true,
-      data: {
-        created: newApplications.length,
-        skipped: duplicates.length,
-        errors: errors.length
-      },
+      created: newApplications.length,
+      skipped: duplicates.length,
+      errors: errors.length,
       details: {
         created: newApplications.map(app => ({ 
           uuid: app.uuid, 
@@ -133,8 +131,7 @@ export const createApplications = async (request, reply) => {
         })),
         skipped: duplicates,
         errors
-      },
-      message: `${newApplications.length} aplicação(ões) criada(s) com sucesso`
+      }
     });
   } catch (err) {
     console.error('Error inserting applications:', err);
@@ -297,11 +294,8 @@ export const updateApplication = async (request, reply) => {
       { projection: DEFAULT_PROJECTION }
     );
     
-    return reply.send({
-      success: true,
-      data: updatedApp,
-      message: 'Aplicação atualizada com sucesso'
-    });
+    // Retornar diretamente o objeto atualizado
+    return reply.send(updatedApp);
   } catch (err) {
     console.error('Error updating application:', err);
     return reply.status(500).send({ 

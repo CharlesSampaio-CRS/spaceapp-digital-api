@@ -188,23 +188,7 @@ const startServer = async () => {
       });
     });
 
-    // Rota de documentação (redireciona para o Swagger UI)
-    fastify.get('/docs', {
-      schema: {
-        description: 'Interface de documentação Swagger da API',
-        tags: ['Docs'],
-        response: {
-          302: {
-            description: 'Redireciona para a interface Swagger UI',
-            type: 'null'
-          }
-        }
-      }
-    }, async (request, reply) => {
-      return reply.redirect('/docs/');
-    });
-
-    // Rota de métricas de performance
+// Rota de métricas de performance
     fastify.get('/metrics', {
       preHandler: [fastify.authenticate],
       schema: {

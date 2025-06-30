@@ -46,6 +46,14 @@ fastify.register(swagger, {
     schemes: [process.env.NODE_ENV === 'production' ? 'https' : 'http'],
     consumes: ['application/json'],
     produces: ['application/json'],
+    securityDefinitions: {
+      BearerAuth: {
+        type: 'apiKey',
+        name: 'Authorization',
+        in: 'header',
+        description: 'Insira o token JWT no formato: Bearer <token>'
+      }
+    }
   },
 });
 
@@ -127,6 +135,20 @@ fastify.setNotFoundHandler((request, reply) => {
   });
 });
 
+fastify.addSchema({
+  $id: 'HealthResponse',
+  type: 'object',
+  properties: {
+    status: { type: 'string', example: 'ok' },
+    timestamp: { type: 'string', format: 'date-time' },
+    uptime: { type: 'number', example: 123.45 },
+    responseTime: { type: 'string', example: '10ms' },
+    database: { type: 'string', example: 'connected' },
+    environment: { type: 'string', example: 'development' },
+    version: { type: 'string', example: '1.0.0' }
+  }
+});
+
 const startServer = async () => {
   try {
     // Conectar ao MongoDB com configurações otimizadas
@@ -142,14 +164,19 @@ const startServer = async () => {
     fastify.register(usersRoutes);
 
     // Rota de health check otimizada
-    fastify.get('/health', async (request, reply) => {
+    fastify.get('/health', {
+      schema: {
+        description: 'Verifica o status de saúde da API e do banco de dados',
+        tags: ['Health'],
+        response: {
+          200: { $ref: 'HealthResponse#' }
+        }
+      }
+    }, async (request, reply) => {
       const startTime = Date.now();
-      
       // Verificar conectividade com MongoDB
       const dbStatus = await client.db('admin').admin().ping();
-      
       const responseTime = Date.now() - startTime;
-      
       return reply.send({
         status: 'ok',
         timestamp: new Date().toISOString(),
@@ -161,12 +188,46 @@ const startServer = async () => {
       });
     });
 
+    // Rota de documentação (redireciona para o Swagger UI)
+    fastify.get('/docs', {
+      schema: {
+        description: 'Interface de documentação Swagger da API',
+        tags: ['Docs'],
+        response: {
+          302: {
+            description: 'Redireciona para a interface Swagger UI',
+            type: 'null'
+          }
+        }
+      }
+    }, async (request, reply) => {
+      return reply.redirect('/docs/');
+    });
+
     // Rota de métricas de performance
-    fastify.get('/metrics', { preHandler: [fastify.authenticate] }, async (request, reply) => {
+    fastify.get('/metrics', {
+      preHandler: [fastify.authenticate],
+      schema: {
+        description: 'Retorna métricas de performance da API (requer autenticação JWT)',
+        tags: ['Metrics'],
+        security: [{ BearerAuth: [] }],
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              cache: { type: 'object' },
+              rateLimit: { type: 'object' },
+              compression: { type: 'object' },
+              memory: { type: 'object' },
+              uptime: { type: 'number' }
+            }
+          }
+        }
+      }
+    }, async (request, reply) => {
       const { getCacheStats } = await import('./middlewares/cache.js');
       const { getRateLimitStats } = await import('./middlewares/rateLimit.js');
       const { getCompressionStats } = await import('./middlewares/compression.js');
-      
       return reply.send({
         cache: getCacheStats(),
         rateLimit: getRateLimitStats(),

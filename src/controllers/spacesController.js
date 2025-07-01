@@ -156,8 +156,7 @@ export const getSpaceByUserUuid = async (request, reply) => {
 };
 
 export const updateSpaceByUserUuid = async (request, reply) => {
-  const { userUuid } = request.params;
-  const { applications } = request.body;
+  const { userUuid, applications } = request.body;
 
   // Validação de entrada
   if (!userUuid || !isValidUuid(userUuid)) {
@@ -227,7 +226,7 @@ export const updateSpaceByUserUuid = async (request, reply) => {
       message: 'Espaço atualizado com sucesso'
     });
   } catch (err) {
-    console.error('Error updating space:', err);
+    console.error('Error updating space:', err, err.stack);
     return reply.status(500).send({
       error: 'Erro ao atualizar espaço',
       details: process.env.NODE_ENV === 'development' ? err.message : 'Erro interno do servidor'

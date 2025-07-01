@@ -42,7 +42,7 @@ export default async function spaceRoutes(fastify) {
         }
       }
     }
-  }, createSpace);
+  }, updateSpaceByUserUuid);
   
   fastify.put('/spaces', { 
     preHandler: [fastify.authenticate] 

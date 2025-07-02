@@ -1,5 +1,4 @@
 import {
-    createSpace,
     getAllSpaces,
     getSpaceByUserUuid,
     updateSpaceByUserUuid,
@@ -25,7 +24,7 @@ export default async function spaceRoutes(fastify) {
       summary: 'Criar espaço',
       body: {
         type: 'object',
-        required: ['userUuid', 'applicationsUuid'],
+        required: ['userUuid', 'applications'],
         properties: {
           userUuid: { type: 'string', format: 'uuid' },
           applicationsUuid: {
@@ -45,7 +44,6 @@ export default async function spaceRoutes(fastify) {
   }, updateSpaceByUserUuid);
   
   fastify.put('/spaces', { 
-    preHandler: [fastify.authenticate] 
   }, updateSpaceByUserUuid);
   
   fastify.delete('/spaces/:uuid', { 

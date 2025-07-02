@@ -67,7 +67,7 @@ fastify.register(swaggerUi, {
 fastify.register(fastifyJwt, {
   secret: process.env.JWT_SECRET,
   sign: {
-    expiresIn: '1h'
+    expiresIn: '2h'
   }
 });
 

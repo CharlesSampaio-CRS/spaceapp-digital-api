@@ -13,7 +13,7 @@ export default async function spaceRoutes(fastify) {
   }, getAllSpaces);
   
   fastify.get('/spaces/:userUuid', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getSpaceByUserUuid);
   
   // Rotas de escrita sem cache

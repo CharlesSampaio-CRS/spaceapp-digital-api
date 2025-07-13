@@ -4,12 +4,11 @@ import {
     updateSpaceByUserUuid,
     deactivateSpace
   } from '../controllers/spacesController.js';
-import { cacheMiddleware } from '../middlewares/cache.js';
   
 export default async function spaceRoutes(fastify) {
   // Rotas de leitura com cache
   fastify.get('/spaces', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getAllSpaces);
   
   fastify.get('/spaces/:userUuid', { 

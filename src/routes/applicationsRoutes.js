@@ -5,16 +5,15 @@ import {
   updateApplication, 
   deleteApplication 
 } from '../controllers/applicationsController.js';
-import { cacheMiddleware } from '../middlewares/cache.js';
 
 export default async function applicationsRoutes(fastify) {
   // Rotas de leitura com cache
   fastify.get('/applications', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getAllApplications);
   
   fastify.get('/applications/:application', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getApplicationByApplication);
   
   // Rotas de escrita sem cache

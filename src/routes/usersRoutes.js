@@ -4,16 +4,16 @@ import {
   updateUser,
   deleteUser
 } from '../controllers/usersController.js';
-import { cacheMiddleware } from '../middlewares/cache.js';
+
 
 export default async function usersRoutes(fastify) {
   // Rotas de leitura com cache
   fastify.get('/users', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getAllUsers);
   
   fastify.get('/users/:uuid', { 
-    preHandler: [fastify.authenticate, cacheMiddleware()] 
+    preHandler: [fastify.authenticate] 
   }, getUserByIdUuid);
   
   // Rotas de escrita sem cache
